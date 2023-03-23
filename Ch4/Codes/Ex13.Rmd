@@ -1,0 +1,60 @@
+---
+title: "An introduction to statistical learning - Ch4 - Ex13"
+author: "Thalles Quinaglia Liduares"
+date: "23/03/2023"
+output: html_document
+---
+
+Using the Boston data set from ISLR package, fit classification models in order to predict
+whether a given suburb has a crime rate above or below the median.
+Explore logistic regression, LDA, and KNN models using various subsets of the predictors. 
+
+Upload package
+
+
+```{r, message=FALSE}
+library(ISLR2)
+```
+
+Upload data 
+
+```{r}
+Boston<-ISLR2::Boston
+```
+Binary variable highcrime indicates whether the crime rate is above or below the median
+
+```{r}
+Boston$highcrime <- ifelse(Boston$crim > median(Boston$crim), 1, 0)
+table(Boston$highcrime)
+```
+Logistic regression 
+
+```{r}
+fit1 <- glm(highcrime ~ ., data = Boston, family = "binomial")
+summary(fit1)
+```
+
+We can see that all variables are significant except `age` and `dis`.
+
+LDA model
+
+```{r}
+library(MASS)
+fit2 <- lda(highcrime ~ zn + indus + nox + rm + tax + ptratio  + lstat, data = Boston)
+fit2
+```
+
+```{r}
+library(class)
+x <- subset(Boston, select = c(zn, indus, nox, rm, tax, ptratio, lstat))
+y <- Boston$highcrime
+set.seed(123)
+train <- sample(1:nrow(Boston), nrow(Boston)/2)
+test <- setdiff(1:nrow(Boston), train)
+yhat <- knn(x[train,], x[test,], y[train], k = 5)
+mean(yhat == y[test])
+```
+
+We can see that the KNN model has the highest accuracy among the three models (85.2%).
+
+Overall, we found that the KNN model performed the best in predicting whether a given suburb has a crime rate above or below the median, using a subset of significant variables

@@ -1,0 +1,145 @@
+---
+title: "An introduction to statistical learning - Ch6 - Ex9"
+author: "Thalles Quinaglia Liduares"
+date: "24/03/2023"
+output: html_document
+---
+
+```{r, warning=FALSE}
+library(ISLR)
+library(caret)
+```
+
+Upload data 
+
+```{r}
+data<-ISLR::College
+```
+Split data 
+
+```{r}
+set.seed(1234)
+trainIndex <- createDataPartition(College$Apps, p = 0.7, list = FALSE)
+trainData <- College[trainIndex, ]
+testData <- College[-trainIndex, ]
+```
+
+(b) Fit a linear model using least squares on the training set, and
+report the test error obtained.
+
+```{r}
+
+# Fit linear model on training set
+lm_fit <- lm(Apps ~ ., data = trainData)
+
+
+# Predict on test set
+lm_pred <- predict(lm_fit, newdata = testData)
+
+# Calculate RMSE
+lm_rmse <- sqrt(mean((lm_pred - testData$Apps)^2))
+
+# Print test error
+cat("Test RMSE for linear model:", lm_rmse, "\n")
+```
+
+(c) Fit a ridge regression model on the training set, with $\lambda$ chosen
+by cross-validation. Report the test error obtained.
+
+```{r}
+library(glmnet)
+```
+
+Convert data to matrix format 
+
+```{r}
+x_train <- model.matrix(Apps ~ ., data = trainData)[,-1]
+y_train <- trainData$Apps
+```
+
+Fit ridge regression model with cross-validation
+
+```{r}
+
+set.seed(123)
+
+cv_fit <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 5)
+
+```
+Choose best lambda
+
+```{r}
+best_lambda <- cv_fit$lambda.min
+```
+Fit ridge regression model with chosen lambda
+
+```{r}
+ridge_fit <- glmnet(x_train, y_train, alpha = 0, lambda = best_lambda)
+```
+
+Predict on test set
+
+```{r}
+x_test <- model.matrix(Apps ~ ., data = testData)[,-1]
+ridge_pred <- predict(ridge_fit, newx = x_test)
+
+```
+Calculate RMSE 
+
+```{r}
+ridge_rmse <- sqrt(mean((ridge_pred - testData$Apps)^2))
+```
+
+Print test error
+```{r}
+cat("Test RMSE for ridge regression model:", ridge_rmse, "\n")
+```
+
+
+(d) Fit a lasso model on the training set, with $\lambda$ chosen by crossvalidation. Report the test error obtained, along with the number of non-zero coefficient estimate.
+
+Fit lasso model with cross-validation
+
+```{r}
+
+set.seed(1234)
+cv_fit <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 5)
+
+```
+
+Choose best lambda
+
+```{r}
+best_lambda <- cv_fit$lambda.min
+```
+
+Fit lasso model with chosen lambda
+
+```{r}
+lasso_fit <- glmnet(x_train, y_train, alpha = 1, lambda = best_lambda)
+```
+Predict on test set
+
+```{r}
+x_test <- model.matrix(Apps ~ ., data = testData)[,-1]
+lasso_pred <- predict(lasso_fit, newx = x_test)
+```
+Calculate RMSE
+```{r}
+
+lasso_rmse <- sqrt(mean((lasso_pred - testData$Apps)^2))
+
+```
+Print test error
+
+```{r}
+cat("Test RMSE for lasso model:", lasso_rmse, "\n")
+```
+Print number of non-zero coefficient estimates
+
+```{r}
+cat("Number of non-zero coefficient estimates:", sum(coef(lasso_fit) != 0), "\n")
+```
+
+
+
